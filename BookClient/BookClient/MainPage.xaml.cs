@@ -3,8 +3,6 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Xamarin.Forms;
 
 namespace BookClient
@@ -22,12 +20,22 @@ namespace BookClient
 
         async void OnRefresh(object sender, EventArgs e)
         {
-            var bookCollection = await manager.GetAll();
+            // Turn on network indicator
+            this.IsBusy = true;
 
-            foreach (Book book in bookCollection)
+            try
             {
-                if (books.All(b => b.ISBN != book.ISBN))
-                    books.Add(book);
+                var bookCollection = await manager.GetAll();
+
+                foreach (Book book in bookCollection)
+                {
+                    if (books.All(b => b.ISBN != book.ISBN))
+                        books.Add(book);
+                }
+            }
+            finally
+            {
+                this.IsBusy = false;
             }
         }
 
@@ -53,8 +61,17 @@ namespace BookClient
                     "Are you sure you want to delete the book '"
                         + book.Title + "'?", "Yes", "Cancel") == true)
                 {
-                    await manager.Delete(book.ISBN);
-                    books.Remove(book);
+                    this.IsBusy = true;
+                    try
+                    {
+                        await manager.Delete(book.ISBN);
+                        books.Remove(book);
+                    }
+                    finally
+                    {
+                        this.IsBusy = false;
+                    }
+
                 }
             }
         }
